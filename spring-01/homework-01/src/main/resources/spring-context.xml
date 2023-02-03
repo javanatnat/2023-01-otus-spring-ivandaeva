@@ -10,7 +10,7 @@
     <bean id="testDao" class="ru.otus.spring.dao.StudentTestDaoImpl">
         <constructor-arg index="0" ref="resourceReader"/>
     </bean>
-    <bean id="testPrinter" class="ru.otus.spring.service.TestPrinterImpl">
+    <bean id="testPrinter" class="ru.otus.spring.service.worktest.TestPrinterImpl">
         <constructor-arg index="0" ref="testDao"/>
     </bean>
 
