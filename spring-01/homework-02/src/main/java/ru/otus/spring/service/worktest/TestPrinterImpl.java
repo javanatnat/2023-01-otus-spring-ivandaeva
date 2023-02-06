@@ -1,9 +1,12 @@
 package ru.otus.spring.service.worktest;
 
+import org.springframework.stereotype.Service;
 import ru.otus.spring.dao.StudentTestDao;
 import ru.otus.spring.domain.StudentTest;
 import ru.otus.spring.domain.StudentTestQuestion;
+import ru.otus.spring.service.data.IOContextWorker;
 
+@Service
 public class TestPrinterImpl implements TestPrinter {
     private static final char START_LETTER = 'A';
     private static final String DOT = ". ";
@@ -12,25 +15,39 @@ public class TestPrinterImpl implements TestPrinter {
 
 
     private final StudentTestDao studentTestDao;
+    private final IOContextWorker ioContextWorker;
 
-    public TestPrinterImpl(StudentTestDao studentTestDao) {
+    public TestPrinterImpl(
+            StudentTestDao studentTestDao,
+            IOContextWorker ioContextWorker
+    ) {
         this.studentTestDao = studentTestDao;
+        this.ioContextWorker = ioContextWorker;
     }
 
     @Override
     public void printTest() {
+        ioContextWorker.outputLine("Test:");
+
         StudentTest studentTest = studentTestDao.getStudentTest();
         int questionNum = 0;
+
         for(StudentTestQuestion studentTestQuestion : studentTest.getQuestions()) {
             questionNum++;
-            System.out.println(questionNum + DOT + studentTestQuestion.getQuestion());
-            System.out.print(ANSWERS_START_TAB);
+            ioContextWorker.outputLine(questionNum + DOT + studentTestQuestion.getQuestion());
+            StringBuilder buffer = new StringBuilder(ANSWERS_START_TAB);
             char answerLetter = START_LETTER;
+
             for(String availableAnswer : studentTestQuestion.getAvailableAnswers()) {
-                System.out.print(answerLetter + DOT + availableAnswer + ANSWERS_TAB);
+                buffer.append(answerLetter);
+                buffer.append(DOT);
+                buffer.append(availableAnswer);
+                buffer.append(ANSWERS_TAB);
                 answerLetter++;
             }
-            System.out.println();
+
+            ioContextWorker.outputLine(buffer.toString());
+            ioContextWorker.outputLine();
         }
     }
 }

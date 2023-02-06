@@ -1,5 +1,6 @@
 package ru.otus.spring.dao;
 
+import org.springframework.stereotype.Component;
 import ru.otus.spring.domain.StudentTest;
 import ru.otus.spring.exception.FileParseException;
 import ru.otus.spring.service.data.ResourceReader;
@@ -8,6 +9,7 @@ import ru.otus.spring.service.data.ResourceTestParser;
 import java.io.IOException;
 import java.io.InputStream;
 
+@Component
 public class StudentTestDaoImpl implements StudentTestDao {
     private final ResourceReader resourceReader;
     private final ResourceTestParser testParser;

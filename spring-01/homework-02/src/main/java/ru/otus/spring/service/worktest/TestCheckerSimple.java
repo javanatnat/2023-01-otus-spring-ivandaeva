@@ -1,5 +1,6 @@
 package ru.otus.spring.service.worktest;
 
+import org.springframework.stereotype.Service;
 import ru.otus.spring.domain.StudentTest;
 import ru.otus.spring.domain.StudentTestQuestion;
 import ru.otus.spring.domain.StudentTestResult;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Service
 public class TestCheckerSimple implements TestChecker {
     @Override
     public boolean testIsPassed(StudentTestResult studentTestResult) {

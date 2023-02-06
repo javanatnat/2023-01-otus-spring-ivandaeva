@@ -1,5 +1,6 @@
 package ru.otus.spring.service.data;
 
+import org.springframework.stereotype.Component;
 import ru.otus.spring.domain.StudentTest;
 import ru.otus.spring.domain.StudentTestQuestion;
 import ru.otus.spring.exception.FileParseException;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+@Component
 public class ResourceTestParserImpl implements ResourceTestParser {
     private static final String DELIMITER = ",";
     private static final String EMPTY_STR = "";
