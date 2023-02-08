@@ -10,6 +10,7 @@ import ru.otus.spring.service.data.IOContextWorker;
 public class TestPrinterImpl implements TestPrinter {
     private static final char START_LETTER = 'A';
     private static final String DOT = ". ";
+    private static final String COMMA = ", ";
     private static final String ANSWERS_START_TAB = "    ";
     private static final String ANSWERS_TAB = "   ";
 
@@ -47,6 +48,8 @@ public class TestPrinterImpl implements TestPrinter {
             }
 
             ioContextWorker.outputLine(buffer.toString());
+            ioContextWorker.outputLine(ANSWERS_START_TAB + "Right answer: "
+                    + String.join(COMMA, studentTestQuestion.getRightAnswers()));
             ioContextWorker.outputLine();
         }
     }

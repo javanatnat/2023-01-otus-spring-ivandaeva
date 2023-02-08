@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 
 public class TestRunnerTest {
     @Test
-    void testPrintTest() {
+    void testRunTest() {
         StudentTestDao testDao = mock(StudentTestDao.class);
         when(testDao.getStudentTest()).thenReturn(new StudentTest(
                 List.of(new StudentTestQuestion(
@@ -24,19 +24,26 @@ public class TestRunnerTest {
                         List.of("4")))));
 
         IOContextWorker ioContextWorker = mock(IOContextWorker.class);
-        IOContextWorker spyIOContextWorker = spy(ioContextWorker);
-        when(spyIOContextWorker.getNextLine()).thenReturn("Test");
+        when(ioContextWorker.getNextLine()).thenReturn("Test");
         StringBuilder buffer = new StringBuilder();
         doAnswer((invocationOnMock) -> {
             buffer.append((String) invocationOnMock.getArgument(0));
             return null;
-        }).when(spyIOContextWorker).outputLine(anyString());
-        doNothing().when(spyIOContextWorker).outputLine();
+        }).when(ioContextWorker).outputLine(anyString());
+        doNothing().when(ioContextWorker).outputLine();
 
         TestChecker testChecker = mock(TestChecker.class);
         when(testChecker.testIsPassed(any(StudentTestResult.class))).thenReturn(true);
 
-        TestRunner runner = new TestRunnerImpl(testDao, testChecker, spyIOContextWorker);
+        TestPrinter testPrinter = mock(TestPrinter.class);
+        doNothing().when(testPrinter).printTest();
+
+        TestRunner runner = new TestRunnerImpl(
+                testDao,
+                testChecker,
+                ioContextWorker,
+                testPrinter);
+
         runner.runTest();
         assertThat(buffer.toString())
                 .isNotBlank()
@@ -44,9 +51,10 @@ public class TestRunnerTest {
                 .contains("2+2")
                 .contains("Test")
                 .endsWith("Тестирование окончено!");
-        verify(spyIOContextWorker, atLeastOnce()).outputLine(anyString());
-        verify(spyIOContextWorker, atLeastOnce()).outputLine();
-        verify(spyIOContextWorker, atLeastOnce()).getNextLine();
+        verify(ioContextWorker, atLeastOnce()).outputLine(anyString());
+        verify(ioContextWorker, atLeastOnce()).outputLine();
+        verify(ioContextWorker, atLeastOnce()).getNextLine();
         verify(testChecker,times(1)).testIsPassed(any(StudentTestResult.class));
+        verify(testPrinter,times(1)).printTest();
     }
 }

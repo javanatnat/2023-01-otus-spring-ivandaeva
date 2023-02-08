@@ -23,21 +23,20 @@ public class TestPrinterTest {
                         List.of("4")))));
 
         IOContextWorker ioContextWorker = mock(IOContextWorker.class);
-        IOContextWorker spyIOContextWorker = spy(ioContextWorker);
-        when(spyIOContextWorker.getNextLine()).thenReturn("Test");
+        when(ioContextWorker.getNextLine()).thenReturn("Test");
         StringBuilder buffer = new StringBuilder();
         doAnswer((invocationOnMock) -> {
             buffer.append((String) invocationOnMock.getArgument(0));
             return null;
-        }).when(spyIOContextWorker).outputLine(anyString());
-        doNothing().when(spyIOContextWorker).outputLine();
+        }).when(ioContextWorker).outputLine(anyString());
+        doNothing().when(ioContextWorker).outputLine();
 
-        TestPrinter printer = new TestPrinterImpl(testDao, spyIOContextWorker);
+        TestPrinter printer = new TestPrinterImpl(testDao, ioContextWorker);
         printer.printTest();
         assertThat(buffer.toString())
                 .isNotBlank()
                 .startsWith("Test:");
-        verify(spyIOContextWorker,times(3)).outputLine(anyString());
-        verify(spyIOContextWorker,times(1)).outputLine();
+        verify(ioContextWorker,times(4)).outputLine(anyString());
+        verify(ioContextWorker,times(1)).outputLine();
     }
 }

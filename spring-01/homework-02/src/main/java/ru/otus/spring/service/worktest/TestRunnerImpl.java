@@ -19,15 +19,18 @@ public class TestRunnerImpl implements TestRunner {
     private final StudentTestDao studentTestDao;
     private final TestChecker testChecker;
     private final IOContextWorker ioContextWorker;
+    private final TestPrinter testPrinter;
 
     public TestRunnerImpl(
             StudentTestDao studentTestDao,
             TestChecker testChecker,
-            IOContextWorker ioContextWorker
+            IOContextWorker ioContextWorker,
+            TestPrinter testPrinter
     ) {
         this.studentTestDao = studentTestDao;
         this.testChecker = testChecker;
         this.ioContextWorker = ioContextWorker;
+        this.testPrinter = testPrinter;
     }
 
     @Override
@@ -82,6 +85,8 @@ public class TestRunnerImpl implements TestRunner {
 
         ioContextWorker.outputLine("\nСтудент " + student.getFullName() + ", результат: "
                 + (testIsPassed? "тест успешно сдан!" : "неуспешная попытка :("));
+        ioContextWorker.outputLine("\nПравильные варианты ответов теста:");
+        testPrinter.printTest();
         ioContextWorker.outputLine("\nТестирование окончено!");
     }
 }
