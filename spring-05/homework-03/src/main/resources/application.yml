@@ -1,0 +1,11 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+  messages:
+    basename: language/messages
+    encoding: UTF-8
+
+application:
+  locale: ru_RU
+  default-test-file-name: tests/StudentSimpleTest.csv

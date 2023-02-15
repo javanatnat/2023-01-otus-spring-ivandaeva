@@ -1,0 +1,10 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+  messages:
+    basename: language/messages
+    encoding: UTF-8
+
+application:
+  locale: en
