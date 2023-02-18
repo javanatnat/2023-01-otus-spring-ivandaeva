@@ -1,6 +1,9 @@
 package ru.otus.spring.dao;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.spring.domain.StudentTest;
 import ru.otus.spring.domain.StudentTestQuestion;
 import ru.otus.spring.service.data.ResourceReader;
@@ -12,16 +15,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class StudentTestDaoTest {
+    @Mock
+    private ResourceReader reader;
+    @Mock
+    private ResourceTestParser testParser;
+
     @Test
     void testDaoMock() throws IOException {
-        ResourceReader reader = mock(ResourceReader.class);
         when(reader.getDataFromResource()).thenReturn(InputStream.nullInputStream());
 
-        ResourceTestParser testParser = mock(ResourceTestParser.class);
         when(testParser.parseTest(any(InputStream.class))).thenReturn(new StudentTest(
                 List.of(new StudentTestQuestion(
                         "2+2",

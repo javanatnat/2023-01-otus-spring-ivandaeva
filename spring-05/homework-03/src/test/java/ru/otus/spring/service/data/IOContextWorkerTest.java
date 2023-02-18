@@ -1,6 +1,9 @@
 package ru.otus.spring.service.data;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -10,20 +13,23 @@ import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class IOContextWorkerTest {
+    @Mock
+    private IOContext ioContext;
+    @Mock
+    private PrintStream printStream;
+
     @Test
     void testGetNextLine() {
-        IOContext ioContext = mock(IOContext.class);
-        when(ioContext.getInputStream()).thenReturn(new ByteArrayInputStream("test\n".getBytes(StandardCharsets.UTF_8)));
+        when(ioContext.getInputStream())
+                .thenReturn(new ByteArrayInputStream("test\n".getBytes(StandardCharsets.UTF_8)));
         IOContextWorker ioContextWorker = new IOContextWorkerImpl(ioContext);
         assertThat(ioContextWorker.getNextLine()).isEqualTo("test");
     }
 
     @Test
     void testOutputLine() {
-        IOContext ioContext = mock(IOContext.class);
-        PrintStream printStream = mock(PrintStream.class);
-
         doNothing().when(printStream).println(anyString());
         when(ioContext.getPrintStream()).thenReturn(printStream);
         when(ioContext.getInputStream()).thenReturn(InputStream.nullInputStream());
