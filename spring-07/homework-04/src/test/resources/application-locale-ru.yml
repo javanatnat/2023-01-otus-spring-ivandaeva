@@ -1,0 +1,15 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+  messages:
+    basename: language/messages
+    encoding: UTF-8
+  shell:
+    interactive:
+      enabled: false
+  main:
+    allow-circular-references: true
+
+application:
+  locale: ru_RU
