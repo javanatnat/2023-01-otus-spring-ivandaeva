@@ -1,0 +1,7 @@
+${AnsiColor.BLACK}${AnsiBackground.MAGENTA}.##.....##.##....##.......###....########..########.${AnsiBackground.DEFAULT}
+${AnsiBackground.MAGENTA}.###...###..##..##.......##.##...##.....##.##.....##${AnsiBackground.DEFAULT}
+${AnsiBackground.MAGENTA}.####.####...####.......##...##..##.....##.##.....##${AnsiBackground.DEFAULT}
+${AnsiBackground.MAGENTA}.##.###.##....##.......##.....##.########..########.${AnsiBackground.DEFAULT}
+${AnsiBackground.MAGENTA}.##.....##....##.......#########.##........##.......${AnsiBackground.DEFAULT}
+${AnsiBackground.MAGENTA}.##.....##....##.......##.....##.##........##.......${AnsiBackground.DEFAULT}
+${AnsiBackground.MAGENTA}.##.....##....##.......##.....##.##........##.......${AnsiBackground.DEFAULT}${AnsiColor.DEFAULT}
