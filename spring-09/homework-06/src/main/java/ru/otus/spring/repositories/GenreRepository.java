@@ -10,6 +10,6 @@ public interface GenreRepository {
     Genre save(Genre genre);
     Optional<Genre> getById(long id);
     List<Genre> getAll();
-    void deleteById(long id);
+    void delete(Genre genre);
     Optional<Genre> findByName(String name);
 }

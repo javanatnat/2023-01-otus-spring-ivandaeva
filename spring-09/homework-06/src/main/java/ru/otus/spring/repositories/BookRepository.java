@@ -12,7 +12,7 @@ public interface BookRepository {
     Book save(Book book);
     Optional<Book> getById(long id);
     List<Book> getAll();
-    void deleteById(long id);
+    void delete(Book book);
     Optional<Book> findByNameAndAuthor(String name, Author author);
     List<Book> findBooksByAuthor(Author author);
     List<Book> findBooksByReleaseYearAndGenre(int yearOfRelease, Genre genre);

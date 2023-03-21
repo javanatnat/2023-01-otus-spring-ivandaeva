@@ -10,6 +10,6 @@ public interface AuthorRepository {
     Author save(Author author);
     Optional<Author> getById(long id);
     List<Author> getAll();
-    void deleteById(long id);
+    void delete(Author author);
     Optional<Author> findByName(String name);
 }

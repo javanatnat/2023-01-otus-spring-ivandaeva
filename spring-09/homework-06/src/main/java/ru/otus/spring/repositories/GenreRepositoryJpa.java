@@ -2,16 +2,15 @@ package ru.otus.spring.repositories;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import ru.otus.spring.domain.Genre;
 import ru.otus.spring.exception.LibraryDBException;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+@Component
 public class GenreRepositoryJpa implements GenreRepository {
     @PersistenceContext
     private final EntityManager em;
@@ -48,12 +47,8 @@ public class GenreRepositoryJpa implements GenreRepository {
     }
 
     @Override
-    public void deleteById(long id) {
-        Query query = em.createQuery("delete " +
-                "from Genre g " +
-                "where g.id = :id");
-        query.setParameter("id", id);
-        query.executeUpdate();
+    public void delete(Genre genre) {
+        em.remove(genre);
     }
 
     @Override

@@ -2,16 +2,15 @@ package ru.otus.spring.repositories;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import ru.otus.spring.domain.Author;
 import ru.otus.spring.exception.LibraryDBException;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+@Component
 public class AuthorRepositoryJpa implements AuthorRepository {
     @PersistenceContext
     private final EntityManager em;
@@ -48,12 +47,8 @@ public class AuthorRepositoryJpa implements AuthorRepository {
     }
 
     @Override
-    public void deleteById(long id) {
-        Query query = em.createQuery("delete " +
-                "from Author a " +
-                "where a.id = :id");
-        query.setParameter("id", id);
-        query.executeUpdate();
+    public void delete(Author author) {
+        em.remove(author);
     }
 
     @Override

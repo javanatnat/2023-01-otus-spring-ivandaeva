@@ -26,7 +26,5 @@ public interface LibraryService {
     List<Book> getAllBooks();
     BookComment addBookComment(String comment, String bookName, String authorName);
     BookComment addBookComment(String text, Book book);
-    void deleteBookComment(String comment, String bookName, String authorName);
     void deleteBookComment(BookComment bookComment);
-    List<BookComment> getBookComments(Book book);
 }

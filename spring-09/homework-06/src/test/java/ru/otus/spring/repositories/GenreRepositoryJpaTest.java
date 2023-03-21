@@ -90,7 +90,7 @@ public class GenreRepositoryJpaTest {
         Genre insertedGenre = genreRepositoryJpa.save(genre);
         assertThat(genreRepositoryJpa.getAll()).containsExactly(insertedGenre);
 
-        genreRepositoryJpa.deleteById(insertedGenre.getId());
+        genreRepositoryJpa.delete(insertedGenre);
         assertThat(genreRepositoryJpa.getAll()).isEmpty();
     }
 }

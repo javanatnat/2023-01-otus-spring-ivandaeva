@@ -1,7 +1,7 @@
 package ru.otus.spring.repositories;
 
 import jakarta.persistence.*;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import ru.otus.spring.domain.Author;
 import ru.otus.spring.domain.Book;
 import ru.otus.spring.domain.Genre;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Repository
+@Component
 public class BookRepositoryJpa implements BookRepository {
     @PersistenceContext
     private final EntityManager em;
@@ -28,6 +28,7 @@ public class BookRepositoryJpa implements BookRepository {
 
     @Override
     public Book save(Book book) {
+        System.out.println("insert book =" + book);
         if (book.getId() == null) {
             em.persist(book);
             return book;
@@ -50,12 +51,8 @@ public class BookRepositoryJpa implements BookRepository {
     }
 
     @Override
-    public void deleteById(long id) {
-        Query query = em.createQuery("delete " +
-                "from Book b " +
-                "where b.id = :id");
-        query.setParameter("id", id);
-        query.executeUpdate();
+    public void delete(Book book) {
+        em.remove(book);
     }
 
     @Override

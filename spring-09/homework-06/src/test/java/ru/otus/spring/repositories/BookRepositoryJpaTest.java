@@ -17,14 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import({
-        BookCommentRepositoryJpa.class,
         BookRepositoryJpa.class,
         GenreRepositoryJpa.class,
         AuthorRepositoryJpa.class
 })
 public class BookRepositoryJpaTest {
-    @Autowired
-    BookCommentRepositoryJpa bookCommentRepositoryJpa;
     @Autowired
     BookRepositoryJpa bookRepositoryJpa;
     @Autowired
@@ -43,8 +40,12 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-count"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-count"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-count", null, 1999, author, genre));
-
+                Book.builder()
+                        .name("test-book-count")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
         Book insertedBook = bookRepositoryJpa.save(book);
         assertThat(bookRepositoryJpa.count()).isEqualTo(1);
     }
@@ -54,15 +55,19 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-save"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-save"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-save", "", 1999, author, genre));
-
+                Book.builder()
+                        .name("test-book-save")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
         assertThat(book.getName()).isEqualTo("test-book-save");
         assertThat(book.getId()).isNotNull();
-        assertThat(book.getDescription()).isEqualTo("");
+        assertThat(book.getDescription()).isNull();
         assertThat(book.getYearOfRelease()).isEqualTo(1999);
         assertThat(book.getAuthor()).isEqualTo(author);
         assertThat(book.getGenre()).isEqualTo(genre);
-        assertThat(book.getComments()).isEmpty();
+        assertThat(book.getComments()).isNull();
         assertThat(bookRepositoryJpa.getAll()).containsExactly(book);
 
         Book savedBook = bookRepositoryJpa.save(book);
@@ -92,7 +97,12 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-get-by-id"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-get-by-id"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-get-by-id", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-get-by-id")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
 
         assertThat(book.getId()).isNotNull();
         Optional<Book> findBook = bookRepositoryJpa.getById(book.getId());
@@ -107,11 +117,21 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-get-all"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-get-all"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-get-all", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-get-all")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
         assertThat(bookRepositoryJpa.getAll()).containsExactly(book);
 
         Book book2 = bookRepositoryJpa.save(
-                new Book("test-book-get-all-2", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-get-all-2")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
         assertThat(bookRepositoryJpa.getAll()).containsExactlyInAnyOrder(book, book2);
     }
 
@@ -120,10 +140,15 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-delete"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-delete"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-delete", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-delete")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
         assertThat(bookRepositoryJpa.getAll()).containsExactly(book);
 
-        bookRepositoryJpa.deleteById(book.getId());
+        bookRepositoryJpa.delete(book);
         assertThat(bookRepositoryJpa.getAll()).isEmpty();
     }
 
@@ -132,15 +157,30 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-find-name-author"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-find-name-author"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-find-name-author", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-find-name-author")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
 
 
         Book book2 = bookRepositoryJpa.save(
-                new Book("test-book-find-name-author-2", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-find-name-author-2")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
 
         Author author2 = authorRepositoryJpa.save(new Author("test-book-find-name-author-2"));
         Book book3 = bookRepositoryJpa.save(
-                new Book("test-book-find-name-author", "", 1999, author2, genre));
+                Book.builder()
+                        .name("test-book-find-name-author")
+                        .yearOfRelease(1999)
+                        .author(author2)
+                        .genre(genre)
+                        .build());
 
         Optional<Book> findBook = bookRepositoryJpa.findByNameAndAuthor(
                 "test-book-find-name-author", author);
@@ -157,14 +197,29 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-find-author"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-find-author"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-find-author", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-find-author")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
         Book book2 = bookRepositoryJpa.save(
-                new Book("test-book-find-author-2", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-find-author-2")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
 
         Author author2 = authorRepositoryJpa.save(new Author("test-book-find-author-2"));
 
         Book book3 = bookRepositoryJpa.save(
-                new Book("test-book-find-author", "", 1999, author2, genre));
+                Book.builder()
+                        .name("test-book-find-author")
+                        .yearOfRelease(1999)
+                        .author(author2)
+                        .genre(genre)
+                        .build());
 
         assertThat(bookRepositoryJpa.getAll()).containsExactly(book, book2, book3);
 
@@ -181,14 +236,29 @@ public class BookRepositoryJpaTest {
         Author author = authorRepositoryJpa.save(new Author("test-book-find-year-genre"));
         Genre genre = genreRepositoryJpa.save(new Genre("test-book-find-year-genre"));
         Book book = bookRepositoryJpa.save(
-                new Book("test-book-find-year-genre", "", 1999, author, genre));
+                Book.builder()
+                        .name("test-book-find-year-genre")
+                        .yearOfRelease(1999)
+                        .author(author)
+                        .genre(genre)
+                        .build());
 
         Book book2 = bookRepositoryJpa.save(
-                new Book("test-book-find-year-genre-2", "", 1991, author, genre));
+                Book.builder()
+                        .name("test-book-find-year-genre-2")
+                        .yearOfRelease(1991)
+                        .author(author)
+                        .genre(genre)
+                        .build());
 
         Author author2 = authorRepositoryJpa.save(new Author("test-book-find-year-genre-2"));
         Book book3 = bookRepositoryJpa.save(
-                new Book("test-book-find-year-genre", "", 1999, author2, genre));
+                Book.builder()
+                        .name("test-book-find-year-genre")
+                        .yearOfRelease(1999)
+                        .author(author2)
+                        .genre(genre)
+                        .build());
 
         List<Book> books = bookRepositoryJpa.findBooksByReleaseYearAndGenre(1991, genre);
         assertThat(books).containsExactlyInAnyOrder(book2);

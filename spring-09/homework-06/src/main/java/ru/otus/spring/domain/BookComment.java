@@ -16,7 +16,7 @@ public class BookComment {
     private Long id;
     @Column(name = "text", nullable = false)
     private String text;
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL)
     private Book book;
 
     public BookComment(String text, Book book) {

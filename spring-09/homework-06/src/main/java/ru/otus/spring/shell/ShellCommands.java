@@ -77,12 +77,12 @@ public class ShellCommands {
             String genreName,
             @ShellOption(defaultValue = "Bestseller!") String description
     ) {
-        Book book = new Book(
-                bookName,
-                description,
-                yearOfRelease,
-                new Author(authorName),
-                new Genre(genreName));
+        Book book = Book.builder()
+                .name(bookName)
+                .description(description)
+                .yearOfRelease(yearOfRelease).author(new Author(authorName))
+                .genre(new Genre(genreName))
+                .build();
         library.addBook(book);
     }
 
@@ -94,23 +94,22 @@ public class ShellCommands {
             String genreName,
             @ShellOption(defaultValue = "Bestseller!") String description
     ) {
-        Book book = new Book(
-                bookName,
-                description,
-                yearOfRelease,
-                new Author(authorName),
-                new Genre(genreName));
+        Book book = Book.builder()
+                .name(bookName)
+                .description(description)
+                .yearOfRelease(yearOfRelease)
+                .author(new Author(authorName))
+                .genre(new Genre(genreName))
+                .build();
         library.updateBook(book);
     }
 
     @ShellMethod(value = "Delete book by name and author name", key = {"delete-book", "db"})
     public void deleteBook(String bookName, String authorName) {
-        Book book = new Book(
-                bookName,
-                "",
-                0,
-                new Author(authorName),
-                null);
+        Book book = Book.builder()
+                .name(bookName)
+                .author(new Author(authorName))
+                .build();
         library.deleteBook(book);
     }
 
@@ -153,19 +152,12 @@ public class ShellCommands {
         library.addBookComment(comment, bookName, authorName);
     }
 
-    @ShellMethod(value = "Delete book's comment by book name and author name",
-            key = {"delete-book-comment", "dbc"})
-    public void deleteBookComment(String comment, String bookName, String authorName) {
-        Optional<Book> findBook = library.findBookByNameAndAuthor(bookName, new Author(authorName));
-        findBook.ifPresent(book -> library.deleteBookComment(new BookComment(comment, book)));
-    }
-
     @ShellMethod(value = "Find book's comments by book name and author name",
             key = {"get-books-comments", "gbc"})
     public String getBookComments(String bookName, String authorName) {
         Optional<Book> findBook = library.findBookByNameAndAuthor(bookName, new Author(authorName));
         if (findBook.isPresent()) {
-            List<BookComment> comments = library.getBookComments(findBook.get());
+            List<BookComment> comments = findBook.get().getComments();
             return String.join(
                     COMMA,
                     comments.stream()

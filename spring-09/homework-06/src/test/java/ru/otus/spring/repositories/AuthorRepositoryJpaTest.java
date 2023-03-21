@@ -91,7 +91,7 @@ public class AuthorRepositoryJpaTest {
         Author insertedAuthor = authorRepositoryJpa.save(author);
         assertThat(authorRepositoryJpa.getAll()).containsExactly(insertedAuthor);
 
-        authorRepositoryJpa.deleteById(insertedAuthor.getId());
+        authorRepositoryJpa.delete(insertedAuthor);
         assertThat(authorRepositoryJpa.getAll()).isEmpty();
     }
 }
