@@ -3,7 +3,6 @@ package ru.otus.spring.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -16,8 +15,7 @@ import java.util.List;
 @NamedEntityGraph(name = "book-entity-graph",
         attributeNodes = {
                 @NamedAttributeNode("author"),
-                @NamedAttributeNode("genre"),
-                @NamedAttributeNode("comments")
+                @NamedAttributeNode("genre")
         })
 @NoArgsConstructor
 @AllArgsConstructor
@@ -33,7 +31,7 @@ public class Book {
     private String description;
     @Column(name = "release_year")
     private int yearOfRelease;
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Author author;
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Genre genre;

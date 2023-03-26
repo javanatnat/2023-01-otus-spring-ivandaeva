@@ -17,7 +17,12 @@ public class BookCommentRepositoryJpa implements BookCommentRepository {
 
     @Override
     public long countByBook(Book book) {
-        return book.getComments().size();
+        TypedQuery<Long> query = em.createQuery(
+                "select count(*) " +
+                "from BookComment b " +
+                "where b.book.id = :book_id", Long.class);
+        query.setParameter("book_id", book.getId());
+        return query.getSingleResult();
     }
 
     @Override

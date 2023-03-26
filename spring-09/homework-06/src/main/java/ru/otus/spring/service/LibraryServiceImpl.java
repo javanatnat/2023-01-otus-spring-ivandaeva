@@ -6,104 +6,85 @@ import ru.otus.spring.domain.Author;
 import ru.otus.spring.domain.Book;
 import ru.otus.spring.domain.BookComment;
 import ru.otus.spring.domain.Genre;
-import ru.otus.spring.repositories.AuthorRepository;
-import ru.otus.spring.repositories.BookCommentRepository;
 import ru.otus.spring.repositories.BookRepository;
-import ru.otus.spring.repositories.GenreRepository;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 public class LibraryServiceImpl implements LibraryService {
-    private final GenreRepository genreRepository;
-    private final AuthorRepository authorRepository;
+    private final GenreService genreService;
+    private final AuthorService authorService;
+    private final BookCommentService bookCommentService;
     private final BookRepository bookRepository;
-    private final BookCommentRepository bookCommentRepository;
 
     public LibraryServiceImpl(
-            GenreRepository genreRepository,
-            AuthorRepository authorRepository,
-            BookRepository bookRepository,
-            BookCommentRepository bookCommentRepository
+            GenreService genreService,
+            AuthorService authorService,
+            BookCommentService bookCommentService,
+            BookRepository bookRepository
     ) {
-        this.genreRepository = genreRepository;
-        this.authorRepository = authorRepository;
+        this.genreService = genreService;
+        this.authorService = authorService;
+        this.bookCommentService = bookCommentService;
+
         this.bookRepository = bookRepository;
-        this.bookCommentRepository = bookCommentRepository;
     }
 
     @Override
-    @Transactional
     public Genre addGenre(String name) {
-        checkString(name);
-        Optional<Genre> findGenre = findGenreByName(name);
-        return findGenre.orElseGet(() -> genreRepository.save(new Genre(name)));
+        return genreService.add(name);
     }
 
     @Override
-    @Transactional
     public void deleteGenre(Genre genre) {
-        Objects.requireNonNull(genre);
-        genreRepository.delete(genre);
+        genreService.delete(genre);
     }
 
     @Override
     public Optional<Genre> findGenreByName(String name) {
-        checkString(name);
-        return genreRepository.findByName(name);
+        return genreService.findByName(name);
     }
 
     @Override
     public List<Genre> getAllGenres() {
-        return genreRepository.getAll();
+        return genreService.findAll();
     }
 
     @Override
-    @Transactional
     public Author addAuthor(String name) {
-        checkString(name);
-        Optional<Author> findAuthor = findAuthorByName(name);
-        return findAuthor.orElseGet(() -> authorRepository.save(new Author(name)));
+        return authorService.add(name);
     }
 
     @Override
-    @Transactional
     public void deleteAuthor(Author author) {
-        Objects.requireNonNull(author);
-        authorRepository.delete(author);
+        authorService.delete(author);
     }
 
     @Override
     public Optional<Author> findAuthorByName(String name) {
-        checkString(name);
-        return authorRepository.findByName(name);
+        return authorService.findByName(name);
     }
 
     @Override
     public List<Author> getAllAuthors() {
-        return authorRepository.getAll();
+        return authorService.findAll();
     }
 
     @Override
     @Transactional
     public Book addBook(Book book) {
-        Objects.requireNonNull(book);
-        checkString(book.getName());
-        Objects.requireNonNull(book.getAuthor());
-        Objects.requireNonNull(book.getGenre());
+        checkBookForUpdate(book);
 
         if (!bookIsNew(book)) {
             throw new IllegalArgumentException("Book already in library with id = " + book.getId());
         }
 
-        if (authorIsNew(book.getAuthor())) {
+        if (authorService.isNew(book.getAuthor())) {
             Author insertedAuthor = addAuthor(book.getAuthor().getName());
             book.setAuthor(insertedAuthor);
         }
 
-        if (genreIsNew(book.getGenre())) {
+        if (genreService.isNew(book.getGenre())) {
             Genre insertedGenre = addGenre(book.getGenre().getName());
             book.setGenre(insertedGenre);
         }
@@ -113,53 +94,32 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     @Transactional
     public Book updateBook(Book book) {
-        checkString(book.getName());
-        Objects.requireNonNull(book.getAuthor());
-        Objects.requireNonNull(book.getGenre());
+        checkBookForUpdate(book);
 
         Book bookInDb;
         if (bookIsNew(book)) {
-            Optional<Book> findBook = findBookByNameAndAuthor(book.getName(), book.getAuthor());
-            if (findBook.isEmpty()) {
-                throw new IllegalArgumentException("Book is not in library, name = " + book.getName()
-                        + ", author = " + book.getAuthor().getName());
-            }
-            bookInDb = findBook.get();
+            bookInDb = findBookByNameAndAuthorStrict(book);
         } else {
-            Optional<Book> findBook = bookRepository.getById(book.getId());
-            if (findBook.isEmpty()) {
-                throw new IllegalArgumentException("Book is not in library, name = " + book.getName()
+            bookInDb = findBookByIdStrict(book);
+            if (!book.getName().equals(bookInDb.getName()) ||
+                    !book.getAuthor().getName().equals(bookInDb.getAuthor().getName())
+            ) {
+                throw new IllegalArgumentException("Can't change name or author name for book in library, name = "
+                        + book.getName()
                         + ", author = " + book.getAuthor().getName());
-            } else {
-                bookInDb = findBook.get();
-                if (!book.getName().equals(bookInDb.getName()) ||
-                        !book.getAuthor().getName().equals(bookInDb.getAuthor().getName())
-                ) {
-                    throw new IllegalArgumentException("Can't change name or author name for book in library, name = "
-                            + book.getName()
-                            + ", author = " + book.getAuthor().getName());
-                }
-
             }
         }
 
         book.setId(bookInDb.getId());
+        book.setAuthor(bookInDb.getAuthor());
 
-        if (bookInDb.getGenre() != null &&
-                bookInDb.getGenre().getName().equals(book.getGenre().getName())
-        ) {
-            book.setGenre(bookInDb.getGenre());
-        }
-
-        if (bookInDb.getAuthor() != null &&
-                bookInDb.getAuthor().getName().equals(book.getAuthor().getName())
-        ) {
-            book.setAuthor(bookInDb.getAuthor());
-        }
-
-        if (genreIsNew(book.getGenre())) {
-            Genre insertedGenre = addGenre(book.getGenre().getName());
-            book.setGenre(insertedGenre);
+        if (genreService.isNew(book.getGenre())) {
+            if (bookInDb.getGenre().getName().equals(book.getGenre().getName())) {
+                book.setGenre(bookInDb.getGenre());
+            } else {
+                Genre insertedGenre = addGenre(book.getGenre().getName());
+                book.setGenre(insertedGenre);
+            }
         }
 
         return bookRepository.save(book);
@@ -175,19 +135,12 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public Optional<Book> findBookByNameAndAuthor(String name, Author author) {
         Objects.requireNonNull(author);
-
-        String authorName = author.getName();
-
         checkString(name);
-        checkString(authorName);
+        checkString(author.getName());
 
         Author findByAuthor = author;
-        if (authorIsNew(author)) {
-            Optional<Author> findAuthor = findAuthorByName(authorName);
-            if (findAuthor.isEmpty()) {
-                throw new IllegalArgumentException("Author is not in library, name = " + authorName);
-            }
-            findByAuthor = findAuthor.get();
+        if (authorService.isNew(author)) {
+            findByAuthor = authorService.findByNameStrict(author.getName());
         }
         return bookRepository.findByNameAndAuthor(name, findByAuthor);
     }
@@ -197,15 +150,9 @@ public class LibraryServiceImpl implements LibraryService {
         Objects.requireNonNull(author);
         checkString(author.getName());
 
-        String authorName = author.getName();
         Author findByAuthor = author;
-
-        if (authorIsNew(author)) {
-            Optional<Author> findAuthor = findAuthorByName(authorName);
-            if (findAuthor.isEmpty()) {
-                throw new IllegalArgumentException("Author is not in library, name = " + authorName);
-            }
-            findByAuthor = findAuthor.get();
+        if (authorService.isNew(author)) {
+            findByAuthor = authorService.findByNameStrict(author.getName());
         }
         return bookRepository.findBooksByAuthor(findByAuthor);
     }
@@ -213,20 +160,12 @@ public class LibraryServiceImpl implements LibraryService {
     @Override
     public List<Book> findBooksByReleaseYearAndGenre(int yearOfRelease, Genre genre) {
         Objects.requireNonNull(genre);
-
-        String genreName = genre.getName();
-
-        checkString(genreName);
+        checkString(genre.getName());
 
         Genre findByGenre = genre;
-        if (genreIsNew(genre)) {
-            Optional<Genre> findGenre = findGenreByName(genreName);
-            if (findGenre.isEmpty()) {
-                throw new IllegalArgumentException("Genre is not in library, name = " + genreName);
-            }
-            findByGenre = findGenre.get();
+        if (genreService.isNew(genre)) {
+            findByGenre = genreService.findByNameStrict(genre.getName());
         }
-
         return bookRepository.findBooksByReleaseYearAndGenre(yearOfRelease, findByGenre);
     }
 
@@ -243,40 +182,58 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @Transactional
     public BookComment addBookComment(String text, Book book) {
-        checkString(text);
-        Objects.requireNonNull(book);
-        return bookCommentRepository.save(new BookComment(text, book));
+        return bookCommentService.add(text, book);
+    }
+
+    @Override
+    public void deleteBookComment(BookComment bookComment) {
+        bookCommentService.delete(bookComment);
     }
 
     @Override
     @Transactional
-    public void deleteBookComment(BookComment bookComment) {
-        Objects.requireNonNull(bookComment);
-        Objects.requireNonNull(bookComment.getBook());
-        bookCommentRepository.delete(bookComment);
+    public List<BookComment> getBookComments(String bookName, String authorName) {
+        Optional<Book> findBook = findBookByNameAndAuthor(bookName, new Author(authorName));
+        return findBook
+                .map(book -> List.copyOf(book.getComments()))
+                .orElse(Collections.emptyList());
     }
 
-    private static void checkString(String value) {
+    private void checkString(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException();
         }
     }
 
-    private static boolean bookIsNew(Book book) {
+    private void checkBookForUpdate(Book book) {
+        Objects.requireNonNull(book);
+        Objects.requireNonNull(book.getAuthor());
+        Objects.requireNonNull(book.getGenre());
+        checkString(book.getName());
+        checkString(book.getAuthor().getName());
+        checkString(book.getGenre().getName());
+    }
+
+    private boolean bookIsNew(Book book) {
         return book.getId() == null;
     }
 
-    private static boolean authorIsNew(Author author) {
-        return author.getId() == null;
+    private Book findBookByNameAndAuthorStrict(Book book) {
+        Optional<Book> findBook = findBookByNameAndAuthor(book.getName(), book.getAuthor());
+        if (findBook.isEmpty()) {
+            throw new IllegalArgumentException("Book is not in library, name = " + book.getName()
+                    + ", author = " + book.getAuthor().getName());
+        }
+        return findBook.get();
     }
 
-    private static boolean genreIsNew(Genre genre) {
-        return genre.getId() == null;
-    }
-
-    private static boolean bookCommentIsNew(BookComment bookComment) {
-        return bookComment.getId() == null;
+    private Book findBookByIdStrict(Book book) {
+        Optional<Book> findBook = bookRepository.getById(book.getId());
+        if (findBook.isEmpty()) {
+            throw new IllegalArgumentException("Book is not in library, name = " + book.getName()
+                    + ", author = " + book.getAuthor().getName());
+        }
+        return findBook.get();
     }
 }

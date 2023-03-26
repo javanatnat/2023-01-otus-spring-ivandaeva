@@ -155,16 +155,12 @@ public class ShellCommands {
     @ShellMethod(value = "Find book's comments by book name and author name",
             key = {"get-books-comments", "gbc"})
     public String getBookComments(String bookName, String authorName) {
-        Optional<Book> findBook = library.findBookByNameAndAuthor(bookName, new Author(authorName));
-        if (findBook.isPresent()) {
-            List<BookComment> comments = findBook.get().getComments();
-            return String.join(
-                    COMMA,
-                    comments.stream()
-                            .map(bc -> "{id=" + bc.getId() + ", text=" + bc.getText() + "}")
-                            .toList());
-        }
-        return null;
+        List<BookComment> comments = library.getBookComments(bookName, authorName);
+        return String.join(
+                COMMA,
+                comments.stream()
+                        .map(bc -> "{id=" + bc.getId() + ", text=" + bc.getText() + "}")
+                        .toList());
     }
 
     private static String getBookView(Book book) {
