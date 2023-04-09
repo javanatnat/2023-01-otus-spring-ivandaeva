@@ -1,0 +1,9 @@
+spring:
+  data:
+    mongodb:
+      port: 27017 #0 when flapdoodle using
+      database: test
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG

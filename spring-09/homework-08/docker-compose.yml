@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  mongo:
+    container_name: otus_library
+    image: mongo:latest
+    restart: always
+    ports:
+      - 27017:27017
+
+    volumes:
+      - ./docker-initdb/mongo-init.js:/docker-initdb/mongo-init.js:ro
