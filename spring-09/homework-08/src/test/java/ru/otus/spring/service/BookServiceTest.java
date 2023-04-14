@@ -1,108 +1,84 @@
 package ru.otus.spring.service;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.spring.domain.Author;
 import ru.otus.spring.domain.Book;
 import ru.otus.spring.domain.Genre;
-import ru.otus.spring.repository.AuthorRepository;
 import ru.otus.spring.repository.BookRepository;
-import ru.otus.spring.repository.GenreRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
-@DataMongoTest
-@EnableConfigurationProperties
-@Import({
-        BookServiceImpl.class,
-        AuthorServiceImpl.class,
-        GenreServiceImpl.class
-})
+@ExtendWith(MockitoExtension.class)
 public class BookServiceTest {
-    @Autowired
-    private BookRepository bookRepository;
-    @Autowired
-    private AuthorRepository authorRepository;
-    @Autowired
-    private GenreRepository genreRepository;
-    @Autowired
-    private BookService bookService;
-    @Autowired
+    @Mock
     private AuthorService authorService;
-    @Autowired
+    @Mock
     private GenreService genreService;
+    @Mock
+    private BookRepository bookRepository;
+    @InjectMocks
+    private BookServiceImpl bookService;
 
     @Test
     public void addTest() {
         Book book = Book.builder()
+                .id("1")
                 .name("test-add-book")
                 .yearOfRelease(2000)
-                .authorName("test-add-book")
-                .genreName("test-add-book")
+                .author(new Author("test-add-book"))
+                .genre(new Genre("test-add-book"))
                 .build();
 
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-add-book")).isPresent();
-        assertThat(genreRepository.findByName("test-add-book")).isPresent();
+        when(bookRepository.insert(any(Book.class))).thenReturn(book);
+        assertThat(bookService.add(new Book())).isEqualTo(book);
+    }
 
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-add-book");
-        genreRepository.deleteByName("test-add-book");
+    @Test
+    public void addWithRefsTest() {
+        Book book = Book.builder()
+                .id("1")
+                .name("test-add-book")
+                .yearOfRelease(2000)
+                .author(new Author("1", "test-add-book"))
+                .genre(new Genre("1", "test-add-book"))
+                .build();
+
+        when(authorService.getOrAdd("test-add-book"))
+                .thenReturn(new Author("1", "test-add-book"));
+        when(genreService.getOrAdd("test-add-book"))
+                .thenReturn(new Genre("1", "test-add-book"));
+        when(bookRepository.insert(any(Book.class))).thenReturn(book);
+        assertThat(bookService.addWithRefs(book)).isEqualTo(book);
     }
 
     @Test
     public void updateTest() {
         Book book = Book.builder()
+                .id("1")
                 .name("test-update-book")
                 .yearOfRelease(2000)
-                .authorName("test-update-book")
-                .genreName("test-update-book")
+                .author(new Author("1", "test-update-book"))
+                .genre(new Genre("1", "test-update-book"))
                 .build();
 
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-update-book")).isPresent();
-        assertThat(genreRepository.findByName("test-update-book")).isPresent();
-
-        addBook.setDescription("new description");
-        Book updated = bookService.update(addBook);
-        assertThat(updated).isEqualTo(addBook);
-        assertThat(authorRepository.findByName("test-update-book")).isPresent();
-        assertThat(genreRepository.findByName("test-update-book")).isPresent();
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-update-book");
-        genreRepository.deleteByName("test-update-book");
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        assertThat(bookService.update(book)).isEqualTo(book);
     }
 
     @Test
     public void deleteTest() {
-        Book book = Book.builder()
-                .name("test-delete-book")
-                .yearOfRelease(2000)
-                .authorName("test-delete-book")
-                .genreName("test-delete-book")
-                .build();
-
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-delete-book")).isPresent();
-        assertThat(genreRepository.findByName("test-delete-book")).isPresent();
-
-        bookService.delete(addBook);
-        assertThat(bookRepository.findById(addBook.getId())).isEmpty();
-        assertThat(authorRepository.findByName("test-delete-book")).isPresent();
-        assertThat(genreRepository.findByName("test-delete-book")).isPresent();
-
-        authorRepository.deleteByName("test-delete-book");
-        genreRepository.deleteByName("test-delete-book");
+        doNothing().when(bookRepository).delete(any(Book.class));
+        bookService.delete(new Book());
     }
 
     @Test
@@ -110,91 +86,115 @@ public class BookServiceTest {
         Book book = Book.builder()
                 .name("test-f1-book")
                 .yearOfRelease(2000)
-                .authorName("test-f1-book")
-                .genreName("test-f1-book")
+                .author(new Author("test-f1-book"))
+                .genre(new Genre("test-f1-book"))
                 .build();
 
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-f1-book")).isPresent();
-        assertThat(genreRepository.findByName("test-f1-book")).isPresent();
-
-        Optional<Book> findBook = bookService.findByNameAndAuthorName(
-                "test-f1-book",
-                "test-f1-book");
-        assertThat(findBook).isPresent();
-        assertThat(findBook.get()).isEqualTo(addBook);
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-f1-book");
-        genreRepository.deleteByName("test-f1-book");
+        when(bookRepository.findByNameAndAuthorName("test-f1-book", "test-f1-book"))
+                .thenReturn(Optional.of(book));
+        assertThat(bookService.findByNameAndAuthorName("test-f1-book", "test-f1-book"))
+                .isEqualTo(Optional.of(book));
     }
 
     @Test
     public void findByAuthorTest() {
+        Author author = new Author("test-f2-book");
+        Genre genre = new Genre("test-f2-book");
+
         Book book = Book.builder()
                 .name("test-f2-book")
                 .yearOfRelease(2000)
-                .authorName("test-f2-book")
-                .genreName("test-f2-book")
+                .author(author)
+                .genre(genre)
                 .build();
-
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-f2-book")).isPresent();
-        assertThat(genreRepository.findByName("test-f2-book")).isPresent();
-
-        List<Book> books = bookService.findByAuthor(new Author("test-f2-book"));
-        assertThat(books).containsExactly(addBook);
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-f2-book");
-        genreRepository.deleteByName("test-f2-book");
+        when(bookRepository.findByAuthor(author)).thenReturn(List.of(book));
+        assertThat(bookService.findByAuthor(author)).containsExactly(book);
     }
 
     @Test
-    public void findByYearOfReleaseAndGenreTest() {
+    public void findByAuthorNameTest() {
+        Author author = new Author("test-f2-book");
+        Genre genre = new Genre("test-f2-book");
+
         Book book = Book.builder()
-                .name("test-f3-book")
+                .name("test-f2-book")
                 .yearOfRelease(2000)
-                .authorName("test-f3-book")
-                .genreName("test-f3-book")
+                .author(author)
+                .genre(genre)
+                .build();
+        when(bookRepository.findByAuthorName("test-f2-book")).thenReturn(List.of(book));
+        assertThat(bookService.findByAuthorName("test-f2-book")).containsExactly(book);
+    }
+
+    @Test
+    public void findByGenreTest() {
+        Author author = new Author("test-f2-book");
+        Genre genre = new Genre("test-f2-book");
+
+        Book book = Book.builder()
+                .name("test-f2-book")
+                .yearOfRelease(2000)
+                .author(author)
+                .genre(genre)
+                .build();
+        when(bookRepository.findByGenre(genre)).thenReturn(List.of(book));
+        assertThat(bookService.findByGenre(genre)).containsExactly(book);
+    }
+
+    //List<Book> findByYearOfReleaseAndGenre(int yearOfRelease, Genre genre) {
+    //        return bookRepository.findByYearOfReleaseAndGenreName(yearOfRelease, genre.getName());
+    @Test
+    public void findByYearOfReleaseAndGenreTest() {
+        Author author = new Author("test-f2-book");
+        Genre genre = new Genre("test-f2-book");
+
+        Book book = Book.builder()
+                .name("test-f2-book")
+                .yearOfRelease(2000)
+                .author(author)
+                .genre(genre)
                 .build();
 
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-f3-book")).isPresent();
-        assertThat(genreRepository.findByName("test-f3-book")).isPresent();
-
-        List<Book> books = bookService.findByYearOfReleaseAndGenre(
-                2000,
-                new Genre("test-f3-book"));
-        assertThat(books).containsExactly(addBook);
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-f3-book");
-        genreRepository.deleteByName("test-f3-book");
+        when(bookRepository.findByYearOfReleaseAndGenreName(2000, "test-f2-book"))
+                .thenReturn(List.of(book));
+        assertThat(bookService.findByYearOfReleaseAndGenre(2000, genre)).containsExactly(book);
     }
 
     @Test
     public void findAllTest() {
+        Author author = new Author("test-f2-book");
+        Genre genre = new Genre("test-f2-book");
+
         Book book = Book.builder()
-                .name("test-f4-book")
+                .name("test-f2-book")
                 .yearOfRelease(2000)
-                .authorName("test-f4-book")
-                .genreName("test-f4-book")
+                .author(author)
+                .genre(genre)
                 .build();
 
-        Book addBook = bookService.add(book);
-        assertThat(addBook.getId()).isNotBlank();
-        assertThat(authorRepository.findByName("test-f4-book")).isPresent();
-        assertThat(genreRepository.findByName("test-f4-book")).isPresent();
+        when(bookRepository.findAll()).thenReturn(List.of(book));
+        assertThat(bookService.findAll()).containsExactly(book);
+    }
 
-        List<Book> books = bookService.findAll();
-        assertThat(books).contains(addBook);
+    @Test
+    public void existsByAuthorTest() {
+        Author author = new Author("test-exists-author");
+        when(bookRepository.existsByAuthor(author)).thenReturn(true);
+        assertThat(bookService.existsByAuthor(author)).isTrue();
 
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-f4-book");
-        genreRepository.deleteByName("test-f4-book");
+        Author author2 = new Author("test-exists-author-2");
+        when(bookRepository.existsByAuthor(author2)).thenReturn(false);
+        assertThat(bookService.existsByAuthor(author2)).isFalse();
+    }
+
+    @Test
+    public void existsByGenreTest() {
+        Genre genre = new Genre("test-exists-genre");
+        when(bookRepository.existsByGenre(genre)).thenReturn(true);
+        assertThat(bookService.existsByGenre(genre)).isTrue();
+
+        Genre genre2 = new Genre("test-exists-genre-2");
+        when(bookRepository.existsByGenre(genre2)).thenReturn(false);
+        assertThat(bookService.existsByGenre(genre2)).isFalse();
     }
 }

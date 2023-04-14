@@ -1,106 +1,91 @@
 package ru.otus.spring.service;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Example;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.spring.domain.Genre;
+import ru.otus.spring.repository.BookRepository;
 import ru.otus.spring.repository.GenreRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
-@DataMongoTest
-@EnableConfigurationProperties
-@Import(GenreServiceImpl.class)
+@ExtendWith(MockitoExtension.class)
 public class GenreServiceTest {
-    @Autowired
+    @Mock
     private GenreRepository genreRepository;
-    @Autowired
-    private GenreService genreService;
+    @Mock
+    private BookRepository bookRepository;
+    @InjectMocks
+    private GenreServiceImpl genreService;
 
     @Test
     public void addTest() {
-        Genre added = genreService.add("test-add");
-        assertThat(added.getId()).isNotBlank();
+        Genre genre = new Genre("1", "test-add");
+        when(genreRepository.insert(any(Genre.class))).thenReturn(genre);
 
-        genreRepository.delete(added);
+        assertThat(genreService.add("test-add")).isEqualTo(genre);
     }
 
     @Test
     public void getOrAddTest() {
-        Optional<Genre> fa = genreRepository.findByName("test-get-or-add");
-        assertThat(fa).isEmpty();
-        Genre added = genreService.getOrAdd("test-get-or-add");
-        assertThat(added.getId()).isNotBlank();
-        Genre added2 = genreService.getOrAdd("test-get-or-add");
-        assertThat(added2).isEqualTo(added);
+        Genre genre = new Genre("1", "test-get-add");
+        when(genreRepository.findByName("test-get-add")).thenReturn(Optional.empty());
+        when(genreRepository.insert(any(Genre.class))).thenReturn(genre);
+        assertThat(genreService.getOrAdd("test-get-add")).isEqualTo(genre);
 
-        List<Genre> allAdded = genreRepository.findAll(Example.of(new Genre("test-get-or-add")));
-        assertThat(allAdded).containsExactly(added);
-
-        genreRepository.delete(added);
+        Genre genre2 = new Genre("2", "test-get-add-2");
+        when(genreRepository.findByName("test-get-add-2")).thenReturn(Optional.of(genre2));
+        assertThat(genreService.getOrAdd("test-get-add-2")).isEqualTo(genre2);
     }
 
     @Test
     public void saveTest() {
-        Genre saved = genreService.save(new Genre("test-save"));
-        assertThat(saved.getId()).isNotBlank();
+        Genre genre = new Genre("1", "test-save");
+        when(genreRepository.save(genre)).thenReturn(genre);
+        when(bookRepository.findByGenre(genre)).thenReturn(Collections.emptyList());
 
-        saved.setName("test-save-new");
-        Genre savedNew = genreService.save(saved);
-        assertThat(saved).isEqualTo(savedNew);
-
-        List<Genre> allSaved = genreRepository.findAll(Example.of(new Genre("test-save")));
-        assertThat(allSaved).isEmpty();
-
-        List<Genre> allSavedNew = genreRepository.findAll(Example.of(new Genre("test-save-new")));
-        assertThat(allSavedNew).containsExactly(savedNew);
-
-        genreRepository.delete(savedNew);
+        assertThat(genreService.save(genre)).isEqualTo(genre);
     }
 
     @Test
     public void deleteTest() {
-        Genre added = genreRepository.save(new Genre("test-delete"));
-        assertThat(added.getId()).isNotBlank();
+        Genre genre = new Genre("1", "test-delete");
 
-        genreService.delete(added);
+        when(bookRepository.existsByGenre(genre)).thenReturn(false);
+        doNothing().when(genreRepository).delete(any(Genre.class));
 
-        Optional<Genre> fa = genreRepository.findById(added.getId());
-        assertThat(fa).isEmpty();
+        genreService.delete(genre);
+
+        Genre genre2 = new Genre("2", "test-delete-2");
+        when(bookRepository.existsByGenre(genre2)).thenReturn(true);
+
+        assertThatThrownBy(() -> genreService.delete(genre2)).isExactlyInstanceOf(RuntimeException.class);
     }
 
     @Test
     public void findByNameTest() {
-        Genre added = genreRepository.save(new Genre("test-find"));
-        assertThat(added.getId()).isNotBlank();
+        Genre genre = new Genre("1", "test-find-name");
+        when(genreRepository.findByName("test-find-name")).thenReturn(Optional.of(genre));
+        assertThat(genreService.findByName("test-find-name")).isEqualTo(Optional.of(genre));
 
-        Genre added2 = genreRepository.save(new Genre("test-find-2"));
-        assertThat(added2.getId()).isNotBlank();
-
-        Optional<Genre> fa = genreService.findByName("test-find");
-        assertThat(fa).isPresent();
-        assertThat(fa.get()).isEqualTo(added);
-
-        genreRepository.deleteAll(List.of(added, added2));
+        when(genreRepository.findByName("test-not-find-name")).thenReturn(Optional.empty());
+        assertThat(genreService.findByName("test-not-find-name")).isEmpty();
     }
 
     @Test
     public void findAllTest() {
-        Genre added = genreRepository.save(new Genre("test-find-all"));
-        assertThat(added.getId()).isNotBlank();
-
-        Genre added2 = genreRepository.save(new Genre("test-find-all-2"));
-        assertThat(added2.getId()).isNotBlank();
-
-        List<Genre> authors = genreService.findAll();
-        assertThat(authors).contains(added, added2);
-
-        genreRepository.deleteAll(List.of(added, added2));
+        Genre genre = new Genre("1", "test-find-all");
+        when(genreRepository.findAll()).thenReturn(List.of(genre));
+        assertThat(genreService.findAll()).containsExactly(genre);
     }
 }

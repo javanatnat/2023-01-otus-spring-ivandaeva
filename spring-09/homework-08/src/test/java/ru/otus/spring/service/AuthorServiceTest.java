@@ -1,106 +1,94 @@
 package ru.otus.spring.service;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Example;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.spring.domain.Author;
 import ru.otus.spring.repository.AuthorRepository;
+import ru.otus.spring.repository.BookRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
-@DataMongoTest
-@EnableConfigurationProperties
-@Import(AuthorServiceImpl.class)
+@ExtendWith(MockitoExtension.class)
 public class AuthorServiceTest {
-    @Autowired
+    @Mock
     private AuthorRepository authorRepository;
-    @Autowired
-    private AuthorService authorService;
+    @Mock
+    private BookRepository bookRepository;
+    @InjectMocks
+    private AuthorServiceImpl authorService;
 
     @Test
     public void addTest() {
-        Author added = authorService.add("test-add");
-        assertThat(added.getId()).isNotBlank();
+        Author author = new Author("1", "test-add");
+        when(authorRepository.insert(any(Author.class))).thenReturn(author);
 
-        authorRepository.delete(added);
+        Author added = authorService.add("test-add");
+        assertThat(added).isEqualTo(author);
     }
 
     @Test
     public void getOrAddTest() {
-        Optional<Author> fa = authorRepository.findByName("test-get-or-add");
-        assertThat(fa).isEmpty();
-        Author added = authorService.getOrAdd("test-get-or-add");
-        assertThat(added.getId()).isNotBlank();
-        Author added2 = authorService.getOrAdd("test-get-or-add");
-        assertThat(added2).isEqualTo(added);
+        Author author = new Author("1", "test-get-or-add");
+        when(authorRepository.findByName("test-get-or-add")).thenReturn(Optional.of(author));
 
-        List<Author> allAdded = authorRepository.findAll(Example.of(new Author("test-get-or-add")));
-        assertThat(allAdded).containsExactly(added);
+        assertThat(authorService.getOrAdd("test-get-or-add")).isEqualTo(author);
 
-        authorRepository.delete(added);
+        Author author2 = new Author("2", "test-get-or-add-2");
+        when(authorRepository.insert(any(Author.class))).thenReturn(author2);
+        when(authorRepository.findByName("test-get-or-add-2")).thenReturn(Optional.empty());
+
+        assertThat(authorService.getOrAdd("test-get-or-add-2")).isEqualTo(author2);
     }
 
     @Test
     public void saveTest() {
-        Author saved = authorService.save(new Author("test-save"));
-        assertThat(saved.getId()).isNotBlank();
+        Author author = new Author("1","test-save");
+        when(authorRepository.save(any(Author.class))).thenReturn(author);
+        when(bookRepository.findByAuthor(any(Author.class))).thenReturn(Collections.emptyList());
 
-        saved.setName("test-save-new");
-        Author savedNew = authorService.save(saved);
-        assertThat(saved).isEqualTo(savedNew);
-
-        List<Author> allSaved = authorRepository.findAll(Example.of(new Author("test-save")));
-        assertThat(allSaved).isEmpty();
-
-        List<Author> allSavedNew = authorRepository.findAll(Example.of(new Author("test-save-new")));
-        assertThat(allSavedNew).containsExactly(savedNew);
-
-        authorRepository.delete(savedNew);
+        assertThat(authorService.save(author)).isEqualTo(author);
     }
 
     @Test
     public void deleteTest() {
-        Author added = authorRepository.save(new Author("test-delete"));
-        assertThat(added.getId()).isNotBlank();
+        Author author = new Author("1", "test-delete");
+        when(bookRepository.existsByAuthor(author)).thenReturn(false);
+        doNothing().when(authorRepository).delete(any(Author.class));
 
-        authorService.delete(added);
+        authorService.delete(author);
 
-        Optional<Author> fa = authorRepository.findById(added.getId());
-        assertThat(fa).isEmpty();
+        Author author2 = new Author("2", "test-delete-2");
+        when(bookRepository.existsByAuthor(author2)).thenReturn(true);
+
+        assertThatThrownBy(() -> authorService.delete(author2)).isExactlyInstanceOf(RuntimeException.class);
     }
 
     @Test
     public void findByNameTest() {
-        Author added = authorRepository.save(new Author("test-find"));
-        assertThat(added.getId()).isNotBlank();
+        Author author = new Author("1", "test-find-name");
+        when(authorRepository.findByName("test-find-name")).thenReturn(Optional.of(author));
 
-        Author added2 = authorRepository.save(new Author("test-find-2"));
-        assertThat(added2.getId()).isNotBlank();
+        assertThat(authorService.findByName("test-find-name")).isEqualTo(Optional.of(author));
 
-        Optional<Author> fa = authorService.findByName("test-find");
-        assertThat(fa).isPresent();
-        assertThat(fa.get()).isEqualTo(added);
-
-        authorRepository.deleteAll(List.of(added, added2));
+        when(authorRepository.findByName("test-not-find-name")).thenReturn(Optional.empty());
+        assertThat(authorService.findByName("test-not-find-name")).isEmpty();
     }
 
     @Test
     public void findAllTest() {
-        Author added = authorRepository.save(new Author("test-find-all"));
-        assertThat(added.getId()).isNotBlank();
-
-        Author added2 = authorRepository.save(new Author("test-find-all-2"));
-        assertThat(added2.getId()).isNotBlank();
-
-        List<Author> authors = authorService.findAll();
-        assertThat(authors).contains(added, added2);
-
-        authorRepository.deleteAll(List.of(added, added2));
+        Author author = new Author("1", "test-find-all");
+        when(authorRepository.findAll()).thenReturn(List.of(author));
+        assertThat(authorService.findAll()).containsExactly(author);
     }
 }

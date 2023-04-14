@@ -26,16 +26,24 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    public Book addWithRefs(Book book) {
+        Book book4update = updateAuthorAndGenre(book);
+        return add(book4update);
+    }
+
+    @Override
     public Book add(Book book) {
-        Author author = authorService.getOrAdd(book.getAuthorName());
-        Genre genre = genreService.getOrAdd(book.getGenreName());
         return bookRepository.insert(book);
     }
 
     @Override
+    public Book updateWithRefs(Book book) {
+        Book book4update = updateAuthorAndGenre(book);
+        return update(book4update);
+    }
+
+    @Override
     public Book update(Book book) {
-        Author author = authorService.getOrAdd(book.getAuthorName());
-        Genre genre = genreService.getOrAdd(book.getGenreName());
         return bookRepository.save(book);
     }
 
@@ -50,8 +58,18 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    public List<Book> findByAuthorName(String authorName) {
+        return bookRepository.findByAuthorName(authorName);
+    }
+
+    @Override
     public List<Book> findByAuthor(Author author) {
-        return bookRepository.findByAuthorName(author.getName());
+        return bookRepository.findByAuthor(author);
+    }
+
+    @Override
+    public List<Book> findByGenre(Genre genre) {
+        return bookRepository.findByGenre(genre);
     }
 
     @Override
@@ -62,5 +80,25 @@ public class BookServiceImpl implements BookService {
     @Override
     public List<Book> findAll() {
         return bookRepository.findAll();
+    }
+
+    @Override
+    public boolean existsByAuthor(Author author) {
+        return bookRepository.existsByAuthor(author);
+    }
+
+    @Override
+    public boolean existsByGenre(Genre genre) {
+        return bookRepository.existsByGenre(genre);
+    }
+
+    private Book updateAuthorAndGenre(Book book) {
+        Author author = authorService.getOrAdd(book.getAuthorName());
+        book.setAuthor(author);
+
+        Genre genre = genreService.getOrAdd(book.getGenreName());
+        book.setGenre(genre);
+
+        return book;
     }
 }

@@ -1,136 +1,101 @@
 package ru.otus.spring.service;
 
+
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import ru.otus.spring.domain.Author;
 import ru.otus.spring.domain.Book;
 import ru.otus.spring.domain.BookComment;
-import ru.otus.spring.repository.AuthorRepository;
+import ru.otus.spring.domain.Genre;
 import ru.otus.spring.repository.BookCommentRepository;
-import ru.otus.spring.repository.BookRepository;
-import ru.otus.spring.repository.GenreRepository;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
-@DataMongoTest
-@EnableConfigurationProperties
-@Import({
-        BookCommentServiceImpl.class,
-        BookServiceImpl.class,
-        AuthorServiceImpl.class,
-        GenreServiceImpl.class
-})
+@ExtendWith(MockitoExtension.class)
 public class BookCommentServiceTest {
-    @Autowired
+    @Mock
     private BookCommentRepository bookCommentRepository;
-    @Autowired
-    private BookRepository bookRepository;
-    @Autowired
-    private AuthorRepository authorRepository;
-    @Autowired
-    private GenreRepository genreRepository;
-    @Autowired
-    private BookCommentService bookCommentService;
-    @Autowired
+    @Mock
     private BookService bookService;
+    @InjectMocks
+    private BookCommentServiceImpl bookCommentService;
 
     @Test
     public void addTest() {
         Book book = Book.builder()
+                .id("1")
                 .name("test-add-comment")
                 .yearOfRelease(2000)
-                .authorName("test-add-comment")
-                .genreName("test-add-comment")
+                .author(new Author("test-add-comment"))
+                .genre(new Genre("test-add-comment"))
                 .build();
+        BookComment bookComment = new BookComment("test-add-comment", book);
 
-        Book addBook = bookService.add(book);
-        BookComment bookComment1 = bookCommentService.add("test-add-comment", addBook);
-        assertThat(bookComment1.getId()).isNotBlank();
+        when(bookService.findByNameAndAuthorName("test-add-comment", "test-add-comment"))
+                .thenReturn(Optional.of(book));
+        when(bookCommentRepository.insert(any(BookComment.class))).thenReturn(bookComment);
 
-        BookComment bookComment2 = bookCommentService.add(
+        assertThat(bookCommentService.add(
+                "test-add-comment",
+                "test-add-comment",
+                "test-add-comment")).isEqualTo(bookComment);
+        assertThat(bookCommentService.add("test-add-comment", book)).isEqualTo(bookComment);
+
+        when(bookService.findByNameAndAuthorName("test-add-comment-2", "test-add-comment-2"))
+                .thenReturn(Optional.empty());
+        assertThatThrownBy(() -> bookCommentService.add(
                 "test-add-comment-2",
-                book.getName(),
-                book.getAuthorName());
-        assertThat(bookComment2.getId()).isNotBlank();
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-add-comment");
-        genreRepository.deleteByName("test-add-comment");
-        bookCommentRepository.deleteAll(List.of(bookComment1, bookComment2));
+                "test-add-comment-2",
+                "test-add-comment-2")).isExactlyInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     public void saveTest() {
-        Book book = Book.builder()
-                .name("test-save-comment")
-                .yearOfRelease(2000)
-                .authorName("test-save-comment")
-                .genreName("test-save-comment")
-                .build();
+        BookComment bookComment = new BookComment("test-save-comment", new Book());
+        when(bookCommentRepository.save(any(BookComment.class))).thenReturn(bookComment);
 
-        Book addBook = bookService.add(book);
-        BookComment bookComment = bookCommentService.save(new BookComment("test-save-comment", addBook));
-        assertThat(bookComment.getId()).isNotBlank();
-
-        bookComment.setText("test-save-comment-new");
-        BookComment updated = bookCommentService.save(bookComment);
-        assertThat(updated).isEqualTo(bookComment);
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-save-comment");
-        genreRepository.deleteByName("test-save-comment");
-        bookCommentRepository.deleteAll(List.of(bookComment));
+        assertThat(bookCommentService.save(bookComment)).isEqualTo(bookComment);
     }
 
     @Test
     public void deleteTest() {
-        Book book = Book.builder()
-                .name("test-delete-comment")
-                .yearOfRelease(2000)
-                .authorName("test-delete-comment")
-                .genreName("test-delete-comment")
-                .build();
-
-        Book addBook = bookService.add(book);
-        BookComment bookComment = bookCommentService.save(new BookComment("test-delete-comment", addBook));
-        assertThat(bookComment.getId()).isNotBlank();
-
-        bookCommentService.delete(bookComment);
-        Optional<BookComment> findBookComment = bookCommentRepository.findById(bookComment.getId());
-        assertThat(findBookComment).isEmpty();
-
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-delete-comment");
-        genreRepository.deleteByName("test-delete-comment");
-        bookCommentRepository.deleteAll(List.of(bookComment));
+        doNothing().when(bookCommentRepository).delete(any(BookComment.class));
+        bookCommentService.delete(new BookComment());
     }
 
     @Test
     public void findByBookAndAuthorTest() {
         Book book = Book.builder()
+                .id("1")
                 .name("test-find-comment")
                 .yearOfRelease(2000)
-                .authorName("test-find-comment")
-                .genreName("test-find-comment")
+                .author(new Author("test-find-comment"))
+                .genre(new Genre("test-find-comment"))
                 .build();
+        BookComment bookComment = new BookComment("test-find-comment", book);
 
-        Book addBook = bookService.add(book);
-        BookComment bookComment = bookCommentService.save(new BookComment("test-find-comment", addBook));
-        assertThat(bookComment.getId()).isNotBlank();
+        when(bookService.findByNameAndAuthorName("test-find-comment", "test-find-comment"))
+                .thenReturn(Optional.of(book));
+        when(bookCommentRepository.findByBook(book)).thenReturn(List.of(bookComment));
 
-        List<BookComment> bookComments = bookCommentService.findByBookAndAuthor(
+        assertThat(bookCommentService.findByBookAndAuthor(
                 "test-find-comment",
-                "test-find-comment");
-        assertThat(bookComments).containsExactly(bookComment);
+                "test-find-comment")).containsExactly(bookComment);
 
-        bookRepository.delete(addBook);
-        authorRepository.deleteByName("test-find-comment");
-        genreRepository.deleteByName("test-find-comment");
-        bookCommentRepository.deleteAll(List.of(bookComment));
+        when(bookService.findByNameAndAuthorName("test-find-comment-2", "test-find-comment-2"))
+                .thenReturn(Optional.empty());
+        assertThatThrownBy(() -> bookCommentService.findByBookAndAuthor(
+                "test-find-comment-2",
+                "test-find-comment-2")).isExactlyInstanceOf(IllegalArgumentException.class);
     }
 }

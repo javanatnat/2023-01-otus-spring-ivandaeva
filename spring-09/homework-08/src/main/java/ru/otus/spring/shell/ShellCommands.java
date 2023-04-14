@@ -39,7 +39,10 @@ public class ShellCommands {
 
     @ShellMethod(value = "Add author", key = {"add-author", "aa"})
     public void addAuthor(String authorName) {
-        authorService.add(authorName);
+        Optional<Author> findAuthor = authorService.findByName(authorName);
+        if (findAuthor.isEmpty()) {
+            authorService.add(authorName);
+        }
     }
 
     @ShellMethod(value = "Find author by name", key = {"find-author", "fa"})
@@ -51,7 +54,8 @@ public class ShellCommands {
 
     @ShellMethod(value = "Delete author by name", key = {"delete-author", "da"})
     public void deleteAuthor(String authorName) {
-        authorService.delete(new Author(authorName));
+        Optional<Author> findAuthor = authorService.findByName(authorName);
+        findAuthor.ifPresent(authorService::delete);
     }
 
     @ShellMethod(value = "Get all authors", key = {"get-authors", "alla"})
@@ -62,7 +66,10 @@ public class ShellCommands {
 
     @ShellMethod(value = "Add genre", key = {"add-genre", "ag"})
     public void addGenre(String genreName) {
-        genreService.add(genreName);
+        Optional<Genre> findGenre = genreService.findByName(genreName);
+        if (findGenre.isEmpty()) {
+            genreService.add(genreName);
+        }
     }
 
     @ShellMethod(value = "Find genre by name", key = {"find-genre", "fg"})
@@ -74,7 +81,8 @@ public class ShellCommands {
 
     @ShellMethod(value = "Delete genre by name", key = {"delete-genre", "dg"})
     public void deleteGenre(String genreName) {
-        genreService.delete(new Genre(genreName));
+        Optional<Genre> findGenre = genreService.findByName(genreName);
+        findGenre.ifPresent(genreService::delete);
     }
 
     @ShellMethod(value = "Get all genres", key = {"get-genres", "allg"})
@@ -95,10 +103,10 @@ public class ShellCommands {
                 .name(bookName)
                 .description(description)
                 .yearOfRelease(yearOfRelease)
-                .authorName(authorName)
-                .genreName(genreName)
+                .author(new Author(authorName))
+                .genre(new Genre(genreName))
                 .build();
-        bookService.add(book);
+        bookService.addWithRefs(book);
     }
 
     @ShellMethod(value = "Update book", key = {"update-book", "ub"})
@@ -114,8 +122,8 @@ public class ShellCommands {
             Book book = findBook.get();
             book.setYearOfRelease(yearOfRelease);
             book.setDescription(description);
-            book.setGenreName(genreName);
-            bookService.update(book);
+            book.setGenre(new Genre(genreName));
+            bookService.updateWithRefs(book);
         }
     }
 
