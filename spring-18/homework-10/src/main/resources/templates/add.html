@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Add book</title>
+    <style type="text/css">
+        body {
+            padding: 50px;
+        }
+
+        label {
+            display: inline-block;
+            width: 100px;
+        }
+
+        input:read-only {
+            background: lightgray;
+        }
+
+        .row {
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        function saveBook() {
+            console.log('add book')
+
+            var idInput = document.getElementById("id-input")
+            var nameInput = document.getElementById("book-name-input")
+            var descrInput = document.getElementById("book-descr-input")
+            var yearInput = document.getElementById("book-year-input")
+            var authorInput = document.getElementById("book-author-input")
+            var genreInput = document.getElementById("book-genre-input")
+
+            var book = new Object()
+            book.name = nameInput.value
+            book.description = descrInput.value
+            book.year = yearInput.value
+            book.authorName = authorInput.value
+            book.genreName = genreInput.value
+
+            fetch("api/book", {
+                method: 'POST',
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(book)})
+            .then(rawResponse => rawResponse.json())
+            .then(json => console.log(JSON.stringify(json, null, 4)))
+            .then(json => {
+                nameInput.value = null
+                descrInput.value = null
+                yearInput.value = null
+                authorInput.value = null
+                genreInput.value = null
+            })
+        }
+    </script>
+</head>
+<body>
+
+<!-- Book creation -->
+<form id="add-form" action="add.html" th:method="post" th:action="@{/add}" th:object="${book}">
+    <h3>Book Info:</h3>
+
+    <div class="row">
+        <label for="book-name-input">Name:</label>
+        <input id="book-name-input" name="name" type="text" />
+    </div>
+
+    <div class="row">
+        <label for="book-descr-input">Description:</label>
+        <input id="book-descr-input" name="description" type="text" />
+    </div>
+
+    <div class="row">
+        <label for="book-year-input">Year:</label>
+        <input id="book-year-input" name="year" type="text" />
+    </div>
+
+    <div class="row">
+        <label for="book-author-input">Author:</label>
+        <input id="book-author-input" name="authorName" type="text" />
+    </div>
+
+    <div class="row">
+        <label for="book-genre-input">Genre:</label>
+        <input id="book-genre-input" name="genreName" type="text" />
+    </div>
+
+    <div class="row">
+        <button type="button" onclick="saveBook()">Save</button>
+        <a href="books.html" th:href="@{/}"><button type="button">View all books</button></a>
+    </div>
+</form>
+
+</body>
+</html>
