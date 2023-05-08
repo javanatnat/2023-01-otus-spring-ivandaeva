@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>List of all books</title>
+    <style type="text/css">
+        body {
+            padding: 50px;
+        }
+
+        .books {
+            border: 1px solid steelblue;
+            width: 300px;
+            border-collapse: collapse;
+        }
+
+        .boooks tr td, th {
+            padding: 5px;
+            border: 1px solid steelblue;
+        }
+
+        .books td:last-child, td:first-child {
+            width: 50px;
+        }
+    </style>
+    <script src="/webjars/jquery/3.6.4/jquery.min.js"></script>
+</head>
+<body>
+<h3>Books:</h3>
+<table class="books" id="books">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Year</th>
+            <th>Author</th>
+            <th>Genre</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<br>
+<a href="add.html" th:href = "@{/add}"> Add Book </a>
+
+<script>
+    $(function () {
+        $.get('/api/book').done(function (books) {
+            console.log('get books')
+            books.forEach(function (book) {
+                $('tbody').append(`
+                    <tr id="book_${book.id}">
+                        <td>${book.id}</td>
+                        <td>${book.name}</td>
+                        <td>${book.description}</td>
+                        <td>${book.year}</td>
+                        <td>${book.authorName}</td>
+                        <td>${book.genreName}</td>
+                        <td>
+                            <button type="button" onclick="editBook('${book.id}')">Edit</button>
+                        </td>
+                        <td>
+                            <button type="button" onclick="deleteBook('${book.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `)
+            });
+        })
+    });
+
+    function editBook(id) {
+        document.location.href='/edit?id=' + id;
+    };
+
+    function deleteBook(id) {
+        console.log('delete book id = ' + id)
+        fetch("api/book/" + id, {
+            method: 'DELETE',
+            headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+                }
+        })
+        .then(r => {
+            deleteBookRow(id)
+        })
+    };
+
+    function deleteBookRow(book_id) {
+        const row_id = 'book_' + book_id
+        console.log('delete row in books row id = ' + row_id)
+        var row = document.getElementById(row_id);
+        row.parentNode.removeChild(row);
+    };
+</script>
+</body>
+
+</html>
