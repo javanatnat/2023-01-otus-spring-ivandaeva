@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Edit book</title>
+    <style type="text/css">
+        body {
+            padding: 50px;
+        }
+
+        label {
+            display: inline-block;
+            width: 100px;
+        }
+
+        input:read-only {
+            background: lightgray;
+        }
+
+        .row {
+            margin-top: 10px;
+        }
+    </style>
+    <script src="/webjars/jquery/3.6.4/jquery.min.js"></script>
+    <script>
+        $(function () {
+            book_id = document.getElementById("id-input").value
+            console.log('load book id = ' + book_id)
+            $.get('/api/book/' + book_id).done(function (book) {
+                document.getElementById("id-input").value = book.id
+                document.getElementById("book-name-input").value = book.name
+                document.getElementById("book-descr-input").value = book.description
+                document.getElementById("book-year-input").value = book.year
+                document.getElementById("book-author-input").value = book.authorName
+                document.getElementById("book-genre-input").value = book.genreName
+            })
+        });
+
+        function saveBook() {
+            console.log('edit book')
+
+            var book = new Object()
+            book.id = document.getElementById("id-input").value
+            book.name = document.getElementById("book-name-input").value
+            book.description = document.getElementById("book-descr-input").value
+            book.year = document.getElementById("book-year-input").value
+            book.authorName = document.getElementById("book-author-input").value
+            book.genreName = document.getElementById("book-genre-input").value
+
+            fetch("api/book/" + book.id, {
+                method: 'PUT',
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(book)})
+            .then(rawResponse => rawResponse.json())
+            .then(json => console.log(JSON.stringify(json, null, 4)))
+        }
+    </script>
+</head>
+<body>
+
+<!-- Book edition -->
+<form id="edit-form" action="edit.html" th:method="post">
+    <h3>Book Info:</h3>
+
+    <div class="row">
+        <label for="id-input">ID:</label>
+        <input id="id-input" type="text" readonly="readonly" th:value="*{book_id}"/>
+    </div>
+
+    <div class="row">
+        <label for="book-name-input">Name:</label>
+        <input id="book-name-input" name="name" type="text"/>
+    </div>
+
+    <div class="row">
+        <label for="book-descr-input">Description:</label>
+        <input id="book-descr-input" name="description" type="text"/>
+    </div>
+
+    <div class="row">
+        <label for="book-year-input">Year:</label>
+        <input id="book-year-input" name="year" type="text"/>
+    </div>
+
+    <div class="row">
+        <label for="book-author-input">Author:</label>
+        <input id="book-author-input" name="authorName" type="text"/>
+    </div>
+
+    <div class="row">
+        <label for="book-genre-input">Genre:</label>
+        <input id="book-genre-input" name="genreName" type="text"/>
+    </div>
+
+    <div class="row">
+        <button type="button" onclick="saveBook()">Save</button>
+        <a href="books.html" th:href="@{/}"><button type="button">View all books</button></a>
+    </div>
+</form>
+
+</body>
+</html>
